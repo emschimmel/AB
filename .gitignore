@@ -1,2 +1,10 @@
 *.class
 *.log
+*/target
+*.iml
+*idea
+.DS_Store
+*.pyc
+*/target/
+*/build/*
+*/dist/*
