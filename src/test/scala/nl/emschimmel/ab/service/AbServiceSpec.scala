@@ -5,8 +5,12 @@ import nl.emschimmel.ab.repositories.AbRepository
 import org.scalatest._
 import org.scalatest.Matchers._
 import org.scalatest.mockito.MockitoSugar
+import org.mockito.Mockito._
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class AbServiceSpec extends FlatSpec  with MockitoSugar {
+import scala.concurrent.Future
+
+class AbServiceSpec extends FlatSpec with MockitoSugar {
 
     private val abRepository = mock[AbRepository]
 
@@ -15,14 +19,18 @@ class AbServiceSpec extends FlatSpec  with MockitoSugar {
 
     it should "just work" in {
         val validExperiment = AbExperiment(Option("1"), "name", Set("A", "b"))
+        when(abRepository.storeExperiment(validExperiment)).thenReturn(Future(validExperiment))
+
         val result = service.storeExperiment(validExperiment)
-        result shouldBe empty
+        result.validationResult shouldBe empty
     }
 
     it should "fail with warnings" in {
         val invalidExperiment = AbExperiment(None, "name", Set("A", "b"))
         val expectedWarning = FieldEmptyWarning("id")
-        val result: Seq[ExperimentConditionViolations] = service.storeExperiment(invalidExperiment)
+        when(abRepository.storeExperiment(invalidExperiment)).thenReturn(Future(invalidExperiment))
+
+        val result: Seq[ExperimentConditionViolations] = service.storeExperiment(invalidExperiment).validationResult
         result should be equals Seq(expectedWarning)
     }
 
@@ -34,14 +42,14 @@ class AbServiceSpec extends FlatSpec  with MockitoSugar {
                                 MaxLengthViolation("id"),
                                 CollectionEmpty("variants")
                                 )
-        val result: Seq[ExperimentConditionViolations] = service.storeExperiment(invalidExperiment)
+        val result: Seq[ExperimentConditionViolations] = service.storeExperiment(invalidExperiment).validationResult
         result should contain theSameElementsAs expectedErrors
     }
 
     it should "pass with info" in {
         val validExperiment = AbExperiment(Option(""), "name", Set())
         val expectedInfo = CollectionEmpty("variants")
-        val result: Seq[ExperimentConditionViolations] = service.storeExperiment(validExperiment)
+        val result: Seq[ExperimentConditionViolations] = service.storeExperiment(validExperiment).validationResult
         result should be equals Seq(expectedInfo)
     }
 }
