@@ -20,7 +20,9 @@ class Main {
         KeySpace("experiments").ifNotExists().`with`(
             replication eqs SimpleStrategy.replication_factor(1)
         )
+
     )
+//    ConsistencyLevel = "LOCAL_QUORUM"
 
     val experimentRepository = new AbRepository(cassandraConnection)
     val experimentValidator = new AbExperimentValidator()
